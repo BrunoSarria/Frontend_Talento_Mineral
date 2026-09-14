@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+/* Ativa a variante `dark:` do Tailwind com base na classe `.dark` no <html>,
+   controlada por `hooks/useTheme.tsx`, em vez do prefers-color-scheme padrão. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  Design tokens — Talento Mineral
+
+  Paleta inspirada no granito Verde Ubatuba, extraído no Espírito Santo:
+  um verde-pedra profundo como cor de marca, sobre uma base neutra de
+  pedra clara. Tipografia: Space Grotesk para títulos e números de
+  destaque (traço geométrico, "lapidado"), IBM Plex Sans para o restante
+  da interface (alta legibilidade em tabelas e formulários densos).
+*/
+@theme {
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+
+  --color-bg: #f2f0ea;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #ebe8e0;
+  --color-border: #ddd8cc;
+  --color-border-strong: #c7c0b0;
+
+  --color-text: #21241f;
+  --color-text-secondary: #6c6a5f;
+  --color-text-muted: #9a9788;
+
+  --color-primary: #33463a;
+  --color-primary-hover: #263529;
+  --color-primary-soft: #e4e9e2;
+  --color-primary-soft-border: #c6d2c3;
+
+  --color-accent: #a9784a;
+  --color-accent-soft: #f3e7da;
+
+  --color-success: #2f7d4f;
+  --color-success-soft: #e3f2e8;
+  --color-warning: #b4791e;
+  --color-warning-soft: #fbefdd;
+  --color-error: #b23a32;
+  --color-error-soft: #fbe7e5;
+
+  --color-focus-ring: #567a5f;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-elevated: 0 8px 24px -8px rgba(33, 36, 31, 0.22), 0 2px 6px -2px rgba(33, 36, 31, 0.12);
+  --shadow-soft: 0 1px 2px rgba(33, 36, 31, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+/* Faixa "estratificada" sutil, usada apenas em telas de autenticação e
+   estados vazios — uma referência discreta às camadas de rocha, sem
+   recorrer a fotografia ou textura pesada. */
+.strata-band {
+  background: repeating-linear-gradient(
+    180deg,
+    var(--color-primary) 0px,
+    var(--color-primary) 3px,
+    transparent 3px,
+    transparent 14px
+  );
+  opacity: 0.16;
+}
+
+/*
+  Tema escuro — mesma paleta mineral, redesenhada para fundo escuro (não é
+  uma simples inversão). Aplicado via a classe `.dark` no elemento <html>
+  (ver `hooks/useTheme.tsx`). Como todo o design system consome as cores
+  através de `var(--color-*)`, a troca de tema não exige alterar nenhum
+  componente — só estas variáveis.
+*/
+.dark {
+  --color-bg: #1b1d18;
+  --color-surface: #23261f;
+  --color-surface-sunken: #2b2e25;
+  --color-border: #383b30;
+  --color-border-strong: #4a4d3f;
+
+  --color-text: #eeece3;
+  --color-text-secondary: #aba895;
+  --color-text-muted: #7c7a68;
+
+  --color-primary: #86b590;
+  --color-primary-hover: #9bc4a4;
+  --color-primary-soft: #2a3a2c;
+  --color-primary-soft-border: #3d523f;
+
+  --color-accent: #d3a06e;
+  --color-accent-soft: #3a2d1f;
+
+  --color-success: #6fbf85;
+  --color-success-soft: #21331f;
+  --color-warning: #e3ab54;
+  --color-warning-soft: #3a2d16;
+  --color-error: #e37a70;
+  --color-error-soft: #3a221e;
+
+  --color-focus-ring: #9bc4a4;
+
+  --shadow-elevated: 0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 6px -2px rgba(0, 0, 0, 0.35);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Botões primários usam texto escuro no tema escuro pois a cor primária
+   passa a ser um verde claro (senão o contraste do texto branco cairia). */
+.dark .theme-on-primary {
+  color: #17231a;
+}
+
+.custom-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 8px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
