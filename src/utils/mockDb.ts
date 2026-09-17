@@ -18,27 +18,36 @@ import { readStorage, writeStorage } from "./storage";
 /**
  * Camada única de "banco de dados" simulado, persistida em localStorage.
  *
- * Isso permite que ações do recrutador (desbloquear currículo, criar vaga,
- * comprar créditos, associar candidato) sobrevivam a um refresh da página,
- * aproximando a experiência de um backend real mesmo sem ele existir ainda.
+ * IMPORTANTE — multi-tenant: o pool de currículos (candidatos) é
+ * GLOBAL/compartilhado, como aconteceria de verdade em um marketplace de
+ * recrutamento (todas as empresas pesquisam a mesma base vinda do
+ * WhatsApp). Já vagas, créditos, pagamentos, associações, favoritos,
+ * filtros salvos, notificações e dados da empresa são isolados POR
+ * EMPRESA (chave = companyId da sessão atual), para que criar uma nova
+ * conta comece "do zero" em vez de herdar os dados da conta de demonstração.
+ *
+ * O desbloqueio de um currículo também é por empresa: o registro de QUAL
+ * currículo cada empresa já desbloqueou fica em `db:unlocked:<companyId>`.
+ * Os dados revelados (nome/contato) do currículo em si são gerados uma
+ * única vez e reaproveitados por qualquer empresa que desbloquear aquele
+ * mesmo currículo depois — assim como aconteceria com uma pessoa real.
  */
 
 const KEYS = {
   candidates: "db:candidates",
+  session: "db:session",
   jobs: "db:jobs",
   associations: "db:associations",
   balance: "db:credit-balance",
   transactions: "db:credit-transactions",
   payments: "db:payments",
-  session: "db:session",
   notifications: "db:notifications",
   notificationPrefs: "db:notification-prefs",
   favorites: "db:favorites",
   savedFilters: "db:saved-filters",
   onboarding: "db:onboarding-dismissed",
   company: "db:company",
-  seeded: "db:seeded-v1",
-  seededExtras: "db:seeded-extras-v1",
+  unlocked: "db:unlocked",
 } as const;
 
 const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
@@ -48,6 +57,9 @@ const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
   jobUpdates: true,
   otherNotices: false,
 };
+
+/** Créditos iniciais para uma empresa recém-cadastrada (fora da demo). */
+const STARTER_BALANCE: CreditBalance = { available: 10, acquired: 10, used: 0 };
 
 export const DEMO_RECRUITER: Recruiter = {
   id: "rec-001",
@@ -63,86 +75,123 @@ export const DEMO_CREDENTIALS = {
   password: "123456",
 };
 
-function seedIfNeeded(): void {
-  const seeded = readStorage<boolean>(KEYS.seeded, false);
-  if (seeded) return;
+/** IDs pré-revelados na conta de demonstração (nome/contato já preenchidos no mock). */
+const DEMO_UNLOCKED_IDS = mockCandidates.filter((c) => c.isUnlocked).map((c) => c.id);
 
-  writeStorage(KEYS.candidates, mockCandidates);
-  writeStorage(KEYS.jobs, mockJobs);
-  writeStorage<CandidateJobAssociation[]>(
-    KEYS.associations,
-    mockCandidates
-      .filter((c) => c.jobIds.length > 0)
-      .flatMap((c) =>
-        c.jobIds.map((jobId, idx) => ({
-          id: `assoc-${c.id}-${idx}`,
-          candidateId: c.id,
-          jobId,
-          status: "ASSOCIATED" as const,
-          createdAt: c.createdAt,
-        }))
-      )
-  );
-  writeStorage(KEYS.balance, initialCreditBalance);
-  writeStorage(KEYS.transactions, initialCreditHistory);
-  writeStorage(KEYS.payments, initialPayments);
-  writeStorage(KEYS.seeded, true);
+function currentCompanyId(): string {
+  const session = readStorage<AuthSession | null>(KEYS.session, null);
+  return session?.recruiter.companyId ?? CURRENT_COMPANY_ID;
 }
 
-/** Seed separado para os dados introduzidos na evolução do produto (fase 2),
- * para não resetar o progresso de quem já vinha usando a demonstração. */
-function seedExtrasIfNeeded(): void {
-  const seeded = readStorage<boolean>(KEYS.seededExtras, false);
-  if (seeded) return;
-
-  writeStorage(KEYS.notifications, initialNotifications);
-  writeStorage(KEYS.notificationPrefs, DEFAULT_NOTIFICATION_PREFS);
-  writeStorage<FavoriteCandidate[]>(KEYS.favorites, []);
-  writeStorage<SavedFilter[]>(KEYS.savedFilters, []);
-  writeStorage(KEYS.company, initialCompany);
-  writeStorage(KEYS.seededExtras, true);
+function isDemoCompany(companyId: string): boolean {
+  return companyId === CURRENT_COMPANY_ID;
 }
 
-seedIfNeeded();
-seedExtrasIfNeeded();
+function scoped(base: string, companyId = currentCompanyId()): string {
+  return `${base}:${companyId}`;
+}
 
 export const mockDb = {
+  // ---- Pool de currículos: GLOBAL, compartilhado entre todas as empresas ----
   getCandidates(): Candidate[] {
     return readStorage<Candidate[]>(KEYS.candidates, mockCandidates);
   },
   saveCandidates(candidates: Candidate[]): void {
     writeStorage(KEYS.candidates, candidates);
   },
+
+  /** IDs de currículos que a empresa atual já desbloqueou. */
+  getUnlockedIds(): string[] {
+    const companyId = currentCompanyId();
+    const fallback = isDemoCompany(companyId) ? DEMO_UNLOCKED_IDS : [];
+    return readStorage<string[]>(scoped(KEYS.unlocked, companyId), fallback);
+  },
+  /** Garante que o currículo tenha nome/contato gerados (uma única vez, reaproveitado por todas as empresas) e marca como desbloqueado para a empresa atual. */
+  unlockForCurrentCompany(candidateId: string): Candidate {
+    const candidates = mockDb.getCandidates();
+    const candidate = candidates.find((c) => c.id === candidateId);
+    if (!candidate) throw { status: 404, message: "Currículo não encontrado." };
+
+    let revealed = candidate;
+    if (!candidate.name || !candidate.contact) {
+      revealed = {
+        ...candidate,
+        name: candidate.name ?? `Currículo ${candidate.id.replace("cand-", "#")}`,
+        contact: candidate.contact ?? {
+          phone: "(28) 99900-" + candidate.id.slice(-4),
+          email: `contato.${candidate.id}@exemplo.com`,
+        },
+      };
+      mockDb.saveCandidates(candidates.map((c) => (c.id === candidateId ? revealed : c)));
+    }
+
+    const companyId = currentCompanyId();
+    const unlockedIds = mockDb.getUnlockedIds();
+    if (!unlockedIds.includes(candidateId)) {
+      writeStorage(scoped(KEYS.unlocked, companyId), [...unlockedIds, candidateId]);
+    }
+
+    return revealed;
+  },
+
+  // ---- Dados isolados por empresa ----
   getJobs(): Job[] {
-    return readStorage<Job[]>(KEYS.jobs, mockJobs);
+    const companyId = currentCompanyId();
+    const fallback = isDemoCompany(companyId) ? mockJobs : [];
+    return readStorage<Job[]>(scoped(KEYS.jobs, companyId), fallback);
   },
   saveJobs(jobs: Job[]): void {
-    writeStorage(KEYS.jobs, jobs);
+    writeStorage(scoped(KEYS.jobs), jobs);
   },
+
   getAssociations(): CandidateJobAssociation[] {
-    return readStorage<CandidateJobAssociation[]>(KEYS.associations, []);
+    const companyId = currentCompanyId();
+    const fallback = isDemoCompany(companyId)
+      ? mockCandidates
+          .filter((c) => c.jobIds.length > 0)
+          .flatMap((c) =>
+            c.jobIds.map((jobId, idx) => ({
+              id: `assoc-${c.id}-${idx}`,
+              candidateId: c.id,
+              jobId,
+              status: "ASSOCIATED" as const,
+              createdAt: c.createdAt,
+            }))
+          )
+      : [];
+    return readStorage<CandidateJobAssociation[]>(scoped(KEYS.associations, companyId), fallback);
   },
   saveAssociations(associations: CandidateJobAssociation[]): void {
-    writeStorage(KEYS.associations, associations);
+    writeStorage(scoped(KEYS.associations), associations);
   },
+
   getBalance(): CreditBalance {
-    return readStorage<CreditBalance>(KEYS.balance, initialCreditBalance);
+    const companyId = currentCompanyId();
+    const fallback = isDemoCompany(companyId) ? initialCreditBalance : STARTER_BALANCE;
+    return readStorage<CreditBalance>(scoped(KEYS.balance, companyId), fallback);
   },
   saveBalance(balance: CreditBalance): void {
-    writeStorage(KEYS.balance, balance);
+    writeStorage(scoped(KEYS.balance), balance);
   },
+
   getTransactions(): CreditTransaction[] {
-    return readStorage<CreditTransaction[]>(KEYS.transactions, initialCreditHistory);
+    const companyId = currentCompanyId();
+    const fallback = isDemoCompany(companyId) ? initialCreditHistory : [];
+    return readStorage<CreditTransaction[]>(scoped(KEYS.transactions, companyId), fallback);
   },
   saveTransactions(transactions: CreditTransaction[]): void {
-    writeStorage(KEYS.transactions, transactions);
+    writeStorage(scoped(KEYS.transactions), transactions);
   },
+
   getPayments(): Payment[] {
-    return readStorage<Payment[]>(KEYS.payments, initialPayments);
+    const companyId = currentCompanyId();
+    const fallback = isDemoCompany(companyId) ? initialPayments : [];
+    return readStorage<Payment[]>(scoped(KEYS.payments, companyId), fallback);
   },
   savePayments(payments: Payment[]): void {
-    writeStorage(KEYS.payments, payments);
+    writeStorage(scoped(KEYS.payments), payments);
   },
+
   getSession(): AuthSession | null {
     return readStorage<AuthSession | null>(KEYS.session, null);
   },
@@ -154,7 +203,6 @@ export const mockDb = {
       window.localStorage.removeItem("talento-mineral:session-token");
     }
   },
-
   updateSessionRecruiter(recruiter: Recruiter): void {
     const session = mockDb.getSession();
     if (!session) return;
@@ -162,43 +210,61 @@ export const mockDb = {
   },
 
   getNotifications(): Notification[] {
-    return readStorage<Notification[]>(KEYS.notifications, initialNotifications);
+    const companyId = currentCompanyId();
+    const fallback = isDemoCompany(companyId)
+      ? initialNotifications
+      : [
+          {
+            id: "notif-welcome",
+            title: "Bem-vindo ao Talento Mineral",
+            description: "Sua conta foi criada com sucesso. Explore os currículos disponíveis.",
+            type: "SYSTEM" as const,
+            read: false,
+            createdAt: new Date().toISOString(),
+          },
+        ];
+    return readStorage<Notification[]>(scoped(KEYS.notifications, companyId), fallback);
   },
   saveNotifications(notifications: Notification[]): void {
-    writeStorage(KEYS.notifications, notifications);
+    writeStorage(scoped(KEYS.notifications), notifications);
   },
   getNotificationPreferences(): NotificationPreferences {
-    return readStorage<NotificationPreferences>(KEYS.notificationPrefs, DEFAULT_NOTIFICATION_PREFS);
+    return readStorage<NotificationPreferences>(scoped(KEYS.notificationPrefs), DEFAULT_NOTIFICATION_PREFS);
   },
   saveNotificationPreferences(prefs: NotificationPreferences): void {
-    writeStorage(KEYS.notificationPrefs, prefs);
+    writeStorage(scoped(KEYS.notificationPrefs), prefs);
   },
 
   getFavorites(): FavoriteCandidate[] {
-    return readStorage<FavoriteCandidate[]>(KEYS.favorites, []);
+    return readStorage<FavoriteCandidate[]>(scoped(KEYS.favorites), []);
   },
   saveFavorites(favorites: FavoriteCandidate[]): void {
-    writeStorage(KEYS.favorites, favorites);
+    writeStorage(scoped(KEYS.favorites), favorites);
   },
 
   getSavedFilters(): SavedFilter[] {
-    return readStorage<SavedFilter[]>(KEYS.savedFilters, []);
+    return readStorage<SavedFilter[]>(scoped(KEYS.savedFilters), []);
   },
   saveSavedFilters(filters: SavedFilter[]): void {
-    writeStorage(KEYS.savedFilters, filters);
+    writeStorage(scoped(KEYS.savedFilters), filters);
   },
 
   isOnboardingDismissed(): boolean {
-    return readStorage<boolean>(KEYS.onboarding, false);
+    return readStorage<boolean>(scoped(KEYS.onboarding), false);
   },
   dismissOnboarding(): void {
-    writeStorage(KEYS.onboarding, true);
+    writeStorage(scoped(KEYS.onboarding), true);
   },
 
   getCompany(): Company {
-    return readStorage<Company>(KEYS.company, initialCompany);
+    const companyId = currentCompanyId();
+    const session = mockDb.getSession();
+    const fallback: Company = isDemoCompany(companyId)
+      ? initialCompany
+      : { id: companyId, name: session?.recruiter.companyName ?? "Minha empresa", city: "" };
+    return readStorage<Company>(scoped(KEYS.company, companyId), fallback);
   },
   saveCompany(company: Company): void {
-    writeStorage(KEYS.company, company);
+    writeStorage(scoped(KEYS.company, company.id), company);
   },
 };

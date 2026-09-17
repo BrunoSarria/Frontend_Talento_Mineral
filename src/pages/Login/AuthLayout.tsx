@@ -8,7 +8,7 @@ interface AuthLayoutProps {
 export function AuthLayout({ children, quote }: AuthLayoutProps) {
   return (
     <div className="flex min-h-screen bg-[var(--color-bg)]">
-      <div className="relative hidden w-[42%] shrink-0 overflow-hidden bg-[var(--color-primary)] lg:flex lg:flex-col lg:justify-between lg:p-10">
+      <div className="relative hidden w-[42%] shrink-0 overflow-hidden bg-[var(--color-primary-deep)] lg:flex lg:flex-col lg:justify-between lg:p-10">
         <FacetedRock />
         <div className="relative z-10 flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-sm)] bg-white/12 text-white">
@@ -16,12 +16,12 @@ export function AuthLayout({ children, quote }: AuthLayoutProps) {
               <path d="M8 2L14 5.5L12 13H4L2 5.5L8 2Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
             </svg>
           </span>
-          <span className="font-display text-lg font-semibold text-white">Talento Mineral</span>
+          <span className="font-display text-lg font-extrabold text-white">Talento Mineral</span>
         </div>
 
         <div className="relative z-10">
-          <p className="max-w-sm font-display text-[26px] font-medium leading-[1.25] text-white">
-            Recrutamento feito para quem lida com rocha, não com burocracia.
+          <p className="max-w-sm font-display text-[28px] font-extrabold leading-[1.2] text-white">
+            Conectando pessoas ao mercado de rochas ornamentais.
           </p>
           {quote && <p className="mt-4 max-w-sm text-sm text-white/70">{quote}</p>}
         </div>

@@ -34,7 +34,7 @@ export function AppLayout() {
       {/* Drawer (mobile) */}
       {drawerOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-[#1a1c17]/45" onClick={() => setDrawerOpen(false)} aria-hidden="true" />
+          <div className="absolute inset-0 bg-[#012742]/50" onClick={() => setDrawerOpen(false)} aria-hidden="true" />
           <div className="absolute inset-y-0 left-0 w-64 bg-[var(--color-surface)] shadow-[var(--shadow-elevated)]">
             <Sidebar onNavigate={() => setDrawerOpen(false)} />
           </div>

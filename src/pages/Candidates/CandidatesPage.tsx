@@ -11,9 +11,13 @@ import { EmptyState } from "../../components/ui/EmptyState";
 import { ErrorState } from "../../components/ui/ErrorState";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
+import { UnlockModal } from "../../components/candidates/UnlockModal";
+import { AssociateCandidateModal } from "../../components/candidates/AssociateCandidateModal";
 import { candidateService } from "../../services/candidateService";
 import { favoriteService } from "../../services/favoriteService";
 import { savedFilterService } from "../../services/savedFilterService";
+import { creditService } from "../../services/creditService";
+import { jobService } from "../../services/jobService";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useToast } from "../../hooks/useToast";
 import { formatNumber } from "../../utils/format";
@@ -48,12 +52,19 @@ export function CandidatesPage() {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  // Desbloqueio e associação direto da listagem, como no design.
+  const [balance, setBalance] = useState(0);
+  const [unlockTargetId, setUnlockTargetId] = useState<string | null>(null);
+  const [unlockLoading, setUnlockLoading] = useState(false);
+  const [associateTargetId, setAssociateTargetId] = useState<string | null>(null);
+
   useEffect(() => {
     setCities(candidateService.getDistinctCities());
     setCategories(candidateService.getDistinctCategories());
     setAgeRanges(candidateService.getDistinctAgeRanges());
     favoriteService.getFavoriteIds().then((ids) => setFavoriteIds(new Set(ids)));
     savedFilterService.getSavedFilters().then(setSavedFilters);
+    creditService.getBalance().then((b) => setBalance(b.available));
   }, []);
 
   const effectiveFilters = useMemo<Filters>(
@@ -143,23 +154,84 @@ export function CandidatesPage() {
     if (activeSavedFilterId === id) setActiveSavedFilterId(null);
   }
 
+  async function handleConfirmUnlock() {
+    if (!unlockTargetId) return;
+    setUnlockLoading(true);
+    try {
+      const updated = await candidateService.unlockCandidate(unlockTargetId);
+      setCandidates((prev) => prev?.map((c) => (c.id === updated.id ? updated : c)) ?? prev);
+      const newBalance = await creditService.getBalance();
+      setBalance(newBalance.available);
+      setUnlockTargetId(null);
+      showToast("Currículo desbloqueado com sucesso.", "success");
+    } catch (err) {
+      const message = (err as { message?: string })?.message ?? "Não foi possível desbloquear o currículo.";
+      showToast(message, "error");
+    } finally {
+      setUnlockLoading(false);
+    }
+  }
+
+  async function handleAssociate(jobId: string) {
+    if (!associateTargetId) return;
+    try {
+      await jobService.associateCandidate(associateTargetId, jobId);
+      setAssociateTargetId(null);
+      showToast("Currículo associado à vaga.", "success");
+    } catch (err) {
+      const message = (err as { message?: string })?.message ?? "Não foi possível associar o currículo.";
+      showToast(message, "error");
+    }
+  }
+
+  const associateTarget = candidates?.find((c) => c.id === associateTargetId) ?? null;
+
   const hasActiveCriteria = Boolean(
     debouncedSearch || filters.city || filters.professionalCategory || filters.cnh || filters.experience || filters.availability || filters.ageRange
   );
 
   return (
     <div>
-      <PageHeader title="Currículos" subtitle="Encontre currículos para sua empresa." />
+      <PageHeader
+        eyebrow="Base qualificada"
+        eyebrowMeta="Currículos recebidos via WhatsApp"
+        title="Banco de Currículos"
+        subtitle="Explore e selecione profissionais da cadeia produtiva de rochas ornamentais e mineração."
+      />
 
       <div className="mb-5">
         <Tabs
+          variant="segmented"
           items={[
-            { key: "all", label: "Todos" },
-            { key: "favorites", label: "Favoritos" },
+            { key: "all", label: "Todos os currículos", count: tab === "all" ? formatNumber(total) : undefined },
+            { key: "favorites", label: "Favoritos", count: tab === "favorites" ? formatNumber(total) : undefined },
           ]}
           activeKey={tab}
           onChange={handleChangeTab}
         />
+      </div>
+
+      {/* Regra transacional sempre visível: o custo do desbloqueio nunca é
+          uma surpresa, conforme o princípio de transparência atômica. */}
+      <div className="mb-5 flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--color-accent-border)] border-l-4 border-l-[var(--color-accent)] bg-[var(--color-accent-soft)] p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="flex flex-wrap items-center gap-2 text-[13px] font-bold text-[var(--color-text)]">
+            Regra de desbloqueio
+            <span className="rounded-full bg-[var(--color-surface)] px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--color-accent)]">
+              Custo fixo
+            </span>
+          </p>
+          <p className="mt-1 text-[13px] text-[var(--color-text-secondary)]">
+            O acesso aos dados de contato consome exatamente <strong>1 crédito por currículo</strong>. Currículos já
+            desbloqueados permanecem acessíveis sem custo adicional.
+          </p>
+        </div>
+        <div className="shrink-0 rounded-[var(--radius-md)] bg-[var(--color-surface)] px-4 py-2 text-right">
+          <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--color-text-muted)]">Seu saldo</p>
+          <p className="font-display text-[20px] font-extrabold tabular text-[var(--color-accent)]">
+            {formatNumber(balance)} <span className="text-[12px] font-semibold">créditos</span>
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -237,6 +309,8 @@ export function CandidatesPage() {
                   selectable
                   selected={selectedIds.has(candidate.id)}
                   onToggleSelect={handleToggleSelect}
+                  onUnlock={setUnlockTargetId}
+                  onAssociate={setAssociateTargetId}
                 />
               ))}
             </div>
@@ -271,6 +345,20 @@ export function CandidatesPage() {
           />
         )}
       </div>
+
+      <UnlockModal
+        open={Boolean(unlockTargetId)}
+        onClose={() => setUnlockTargetId(null)}
+        onConfirm={handleConfirmUnlock}
+        balance={balance}
+        loading={unlockLoading}
+      />
+      <AssociateCandidateModal
+        open={Boolean(associateTargetId)}
+        onClose={() => setAssociateTargetId(null)}
+        onAssociate={handleAssociate}
+        associatedJobIds={associateTarget?.jobIds ?? []}
+      />
     </div>
   );
 }

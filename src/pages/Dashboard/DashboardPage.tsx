@@ -121,7 +121,43 @@ export function DashboardPage() {
 
   return (
     <div>
-      <PageHeader title={`Olá, ${firstName} 👋`} subtitle="Veja como está sua operação hoje." />
+      {/* Faixa institucional de contexto de mercado. */}
+      <div className="mb-6 flex flex-col gap-4 rounded-[var(--radius-lg)] bg-[var(--color-primary-deep)] p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <span
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-white/10 text-white dark:text-[#001d33]"
+            aria-hidden="true"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M2.5 12.5L6.5 8.2L9.5 10.8L15.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M11.8 4.5H15.5V8.1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.06em] text-white dark:text-[#001d33]">
+                Mercado ativo
+              </span>
+              <span className="text-[12px] text-white/60 dark:text-[#001d33]/60">Base atualizada continuamente</span>
+            </p>
+            <p className="mt-1.5 font-display text-[16px] font-bold leading-snug text-white dark:text-[#001d33]">
+              Banco de talentos aquecido: novos currículos técnicos de rochas ornamentais e mineração chegam toda semana
+              pelo WhatsApp.
+            </p>
+          </div>
+        </div>
+        <Link to="/curriculos" className="shrink-0">
+          <span className="inline-flex h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-white/25 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-white/10 dark:text-[#001d33] dark:border-[#001d33]/25 dark:hover:bg-[#001d33]/10">
+            Explorar currículos agora <span aria-hidden="true">→</span>
+          </span>
+        </Link>
+      </div>
+
+      <PageHeader
+        eyebrow={session?.recruiter.companyName}
+        title={`Bem-vindo ao Portal do Recrutador, ${firstName}!`}
+        subtitle="Veja como está sua operação hoje."
+      />
 
       {onboarding && !onboarding.dismissed && (
         <div className="mb-6">
@@ -130,10 +166,17 @@ export function DashboardPage() {
       )}
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Vagas abertas" value={stats ? formatNumber(stats.openJobs) : undefined} loading={loading} icon={<IconBriefcase />} />
-        <StatCard label="Currículos encontrados" value={stats ? formatNumber(stats.totalCandidates) : undefined} loading={loading} icon={<IconUsers />} />
-        <StatCard label="Desbloqueados" value={stats ? formatNumber(stats.unlockedCandidates) : undefined} loading={loading} icon={<IconUnlock />} />
-        <StatCard label="Créditos disponíveis" value={stats ? formatNumber(stats.availableCredits) : undefined} loading={loading} icon={<IconCoin />} />
+        <StatCard label="Vagas abertas" value={stats ? formatNumber(stats.openJobs) : undefined} loading={loading} icon={<IconBriefcase />} tone="primary" />
+        <StatCard label="Currículos encontrados" value={stats ? formatNumber(stats.totalCandidates) : undefined} loading={loading} icon={<IconUsers />} tone="info" />
+        <StatCard
+          label="Desbloqueados"
+          value={stats ? formatNumber(stats.unlockedCandidates) : undefined}
+          loading={loading}
+          icon={<IconUnlock />}
+          tone="success"
+          hint="Contatos acessíveis sem custo adicional"
+        />
+        <StatCard label="Créditos disponíveis" value={stats ? formatNumber(stats.availableCredits) : undefined} loading={loading} icon={<IconCoin />} tone="accent" />
       </div>
 
       {!loading && stats && (
@@ -144,22 +187,22 @@ export function DashboardPage() {
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Link to="/vagas/nova">
-          <Button variant="primary">+ Criar vaga</Button>
+          <Button variant="primary">+ Nova vaga</Button>
         </Link>
         <Link to="/curriculos">
-          <Button variant="secondary">🔎 Buscar currículos</Button>
+          <Button variant="secondary">Buscar currículos</Button>
         </Link>
         <Link to="/curriculos?tab=favoritos">
-          <Button variant="secondary">★ Currículos favoritos</Button>
+          <Button variant="secondary">★ Favoritos</Button>
         </Link>
         <Link to="/creditos/comprar">
-          <Button variant="secondary">💳 Comprar créditos</Button>
+          <Button variant="accent">Comprar créditos</Button>
         </Link>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-[var(--color-text)]">Atividade recente</h2>
+          <h2 className="mb-3 font-display text-[18px] font-bold text-[var(--color-text)]">Atividade recente &amp; auditoria</h2>
           <Card padded={false}>
             {loading ? (
               <div className="animate-pulse p-5 text-sm text-[var(--color-text-secondary)]">Carregando...</div>
@@ -172,7 +215,7 @@ export function DashboardPage() {
         </div>
 
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-[var(--color-text)]">Atenção</h2>
+          <h2 className="mb-3 font-display text-[18px] font-bold text-[var(--color-text)]">Atenção</h2>
           <Card padded={false}>
             {loading ? (
               <div className="animate-pulse p-5 text-sm text-[var(--color-text-secondary)]">Carregando...</div>
@@ -195,7 +238,7 @@ export function DashboardPage() {
 
       <div className="mt-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[var(--color-text)]">Suas vagas</h2>
+          <h2 className="font-display text-[18px] font-bold text-[var(--color-text)]">Suas vagas</h2>
           <Link to="/vagas" className="text-sm font-medium text-[var(--color-primary)] hover:underline">
             Ver todas
           </Link>
@@ -211,13 +254,19 @@ export function DashboardPage() {
             {jobs.map((job) => (
               <Link key={job.id} to={`/vagas/${job.id}`}>
                 <Card className="flex flex-col gap-2 transition-colors hover:border-[var(--color-border-strong)] sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="font-medium text-[var(--color-text)]">{job.title}</p>
-                    <p className="text-sm text-[var(--color-text-secondary)]">{job.location}</p>
+                  <div className="min-w-0">
+                    <p className="font-display text-[14px] font-bold text-[var(--color-primary)]">{job.title}</p>
+                    <p className="text-[13px] text-[var(--color-text-secondary)]">
+                      {job.location} · {job.professionalCategory}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-[var(--color-text-secondary)]">{job.candidateCount} currículos</span>
-                    <span className="text-sm text-[var(--color-primary)]">{job.compatibleCount} compatíveis</span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-[13px] tabular text-[var(--color-text-secondary)]">
+                      {job.candidateCount} currículos
+                    </span>
+                    <span className="text-[13px] font-semibold tabular text-[var(--color-success)]">
+                      {job.compatibleCount} compatíveis
+                    </span>
                     <JobStatusBadge status={job.status} />
                   </div>
                 </Card>

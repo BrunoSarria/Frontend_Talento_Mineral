@@ -11,6 +11,13 @@ import { useToast } from "../../hooks/useToast";
 import { formatCurrency } from "../../utils/format";
 import type { CreditPlan } from "../../types/credit";
 
+/** Benefícios por pacote — apenas descritivos, sem regra de negócio acoplada. */
+const PLAN_BENEFITS: Record<string, string[]> = {
+  "plan-010": ["10 desbloqueios de currículos", "Ativação imediata", "Sem taxa de manutenção"],
+  "plan-050": ["50 desbloqueios de currículos", "Suporte prioritário na triagem", "Histórico completo de contatos"],
+  "plan-100": ["100 desbloqueios de currículos", "Faturamento corporativo", "Exportação de relatórios"],
+};
+
 export function BuyCreditsPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -53,8 +60,8 @@ export function BuyCreditsPage() {
     <div>
       <PageHeader
         breadcrumb={<Breadcrumb items={[{ label: "Créditos", to: "/creditos" }, { label: "Comprar créditos" }]} />}
-        title="Comprar créditos"
-        subtitle="Escolha um plano para desbloquear mais currículos."
+        title="Pacotes de créditos"
+        subtitle="Sem fidelidade. Escolha o pacote adequado ao seu volume de contratações."
       />
 
       {error ? (
@@ -64,7 +71,13 @@ export function BuyCreditsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-3">
           {plans.map((plan) => (
-            <CreditPlanCard key={plan.id} plan={plan} onSelect={setSelectedPlan} />
+            <CreditPlanCard
+              key={plan.id}
+              plan={plan}
+              onSelect={setSelectedPlan}
+              featured={Boolean(plan.highlight)}
+              benefits={PLAN_BENEFITS[plan.id] ?? []}
+            />
           ))}
         </div>
       )}

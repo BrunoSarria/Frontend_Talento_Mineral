@@ -164,8 +164,10 @@ export function JobDetailsPage() {
 
       <PageHeader
         breadcrumb={<Breadcrumb items={[{ label: "Vagas", to: "/vagas" }, { label: job.title }]} />}
+        eyebrow={`Cód. ${job.id.replace("job-", "VAG-")}`}
+        eyebrowMeta={job.location}
         title={job.title}
-        subtitle={job.location}
+        subtitle={job.description.split("\n")[0]}
         actions={
           <>
             <Link to={`/vagas/${job.id}/editar`}>
@@ -217,13 +219,54 @@ export function JobDetailsPage() {
 
         <div className="flex flex-col gap-4">
           <Card>
-            <p className="text-sm text-[var(--color-text-secondary)]">Currículos associados</p>
-            <p className="font-display text-3xl font-semibold text-[var(--color-text)]">{job.candidateCount}</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--color-text-muted)]">
+              Currículos associados
+            </p>
+            <p className="mt-1 font-display text-[28px] font-extrabold tabular text-[var(--color-text)]">
+              {job.candidateCount}
+            </p>
           </Card>
           <Card>
-            <p className="text-sm text-[var(--color-text-secondary)]">Compatíveis com a vaga</p>
-            <p className="font-display text-3xl font-semibold text-[var(--color-primary)]">{compatibleCandidates.length}</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--color-text-muted)]">
+              Alta compatibilidade
+            </p>
+            <p className="mt-1 font-display text-[28px] font-extrabold tabular text-[var(--color-success)]">
+              {compatibleCandidates.length}
+            </p>
+            <p className="mt-0.5 text-[12px] text-[var(--color-text-muted)]">Score igual ou acima de 60%</p>
           </Card>
+          <Card>
+            <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--color-text-muted)]">
+              Já desbloqueados
+            </p>
+            <p className="mt-1 font-display text-[28px] font-extrabold tabular text-[var(--color-accent)]">
+              {candidates.filter((c) => c.isUnlocked).length}
+            </p>
+          </Card>
+        </div>
+      </div>
+
+      {/* Explicação do algoritmo — "transparência atômica": o recrutador
+          sempre sabe como o score foi calculado. */}
+      <div className="mt-5 flex gap-3 rounded-[var(--radius-lg)] border border-[var(--color-primary-soft-border)] bg-[var(--color-primary-soft)] p-4">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-surface)] text-[var(--color-primary)]"
+          aria-hidden="true"
+        >
+          ◎
+        </span>
+        <div>
+          <p className="flex flex-wrap items-center gap-2 text-[13px] font-bold text-[var(--color-text)]">
+            Compatibilidade determinística (0 a 100%)
+            <span className="rounded-full bg-[var(--color-surface)] px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--color-primary)]">
+              Algoritmo transparente
+            </span>
+          </p>
+          <p className="mt-1 text-[13px] text-[var(--color-text-secondary)]">
+            Calculada pela aderência a: <strong>categoria profissional</strong> (30), <strong>experiência</strong> (25),{" "}
+            <strong>CNH</strong> (20), <strong>cidade</strong> (15) e <strong>disponibilidade</strong> (10). Sem pontuações
+            arbitrárias nem inferências opacas — é um apoio à decisão, não uma decisão automática.
+          </p>
         </div>
       </div>
 

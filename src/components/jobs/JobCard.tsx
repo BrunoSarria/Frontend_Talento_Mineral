@@ -14,13 +14,13 @@ export function JobCard({ job }: JobCardProps) {
     <Card className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="font-medium text-[var(--color-text)]">{job.title}</h3>
-          <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">{job.location}</p>
+          <h3 className="font-display text-[15px] font-bold text-[var(--color-primary)]">{job.title}</h3>
+          <p className="mt-0.5 text-[13px] text-[var(--color-text-secondary)]">{job.location}</p>
         </div>
         <JobStatusBadge status={job.status} />
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--color-text-secondary)]">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[var(--color-text-secondary)]">
         <span>{job.professionalCategory}</span>
         <span aria-hidden="true">·</span>
         <span>{job.candidateCount} currículos</span>

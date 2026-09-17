@@ -5,51 +5,110 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
-  Design tokens — Talento Mineral
+  Design tokens — Talento Mineral / Portal do Recrutador
 
-  Paleta inspirada no granito Verde Ubatuba, extraído no Espírito Santo:
-  um verde-pedra profundo como cor de marca, sobre uma base neutra de
-  pedra clara. Tipografia: Space Grotesk para títulos e números de
-  destaque (traço geométrico, "lapidado"), IBM Plex Sans para o restante
-  da interface (alta legibilidade em tabelas e formulários densos).
+  "Modern Corporate Technical": arquitetura de informação de inspiração suíça
+  com padrões de software corporativo. A paleta parte do petróleo/marinho
+  profundo (autoridade institucional) sobre canvas neutro sem brilho,
+  com bronze mineral reservado a créditos e elementos transacionais.
+
+  Tipografia: Plus Jakarta Sans em toda a interface — geometria técnica com
+  contraformas humanistas abertas. Números usam figuras tabulares para não
+  "pular" durante atualizações dinâmicas.
 */
 @theme {
-  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
-  --font-sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  --font-sans: "Plus Jakarta Sans", "Segoe UI", sans-serif;
 
-  --color-bg: #f2f0ea;
+  /* Superfícies */
+  --color-bg: #f2f2f2;
   --color-surface: #ffffff;
-  --color-surface-sunken: #ebe8e0;
-  --color-border: #ddd8cc;
-  --color-border-strong: #c7c0b0;
+  --color-surface-sunken: #f4f3f3;
+  --color-surface-raised: #eeeeee;
+  --color-border: #e4e6e9;
+  --color-border-strong: #c3c7ce;
 
-  --color-text: #21241f;
-  --color-text-secondary: #6c6a5f;
-  --color-text-muted: #9a9788;
+  /* Texto */
+  --color-text: #1a1c1c;
+  --color-text-secondary: #43474d;
+  --color-text-muted: #73777e;
 
-  --color-primary: #33463a;
-  --color-primary-hover: #263529;
-  --color-primary-soft: #e4e9e2;
-  --color-primary-soft-border: #c6d2c3;
+  /* Marca — petróleo / marinho profundo */
+  --color-primary: #1d3d59;
+  --color-primary-hover: #012742;
+  --color-primary-deep: #012742;
+  --color-primary-soft: #edf5fc;
+  --color-primary-soft-border: #cfe0ef;
+  --color-on-primary: #ffffff;
 
-  --color-accent: #a9784a;
-  --color-accent-soft: #f3e7da;
+  /* Bronze mineral — reservado a créditos e elementos transacionais */
+  --color-accent: #8a5b29;
+  --color-accent-soft: #f5efe6;
+  --color-accent-border: #e3d5c1;
 
-  --color-success: #2f7d4f;
-  --color-success-soft: #e3f2e8;
-  --color-warning: #b4791e;
-  --color-warning-soft: #fbefdd;
-  --color-error: #b23a32;
-  --color-error-soft: #fbe7e5;
+  /* Status semânticos */
+  --color-success: #2d7a58;
+  --color-success-soft: #eaf5ef;
+  --color-warning: #c4801c;
+  --color-warning-soft: #fef7e9;
+  --color-error: #a83e38;
+  --color-error-soft: #fbefed;
+  --color-info: #286699;
+  --color-info-soft: #edf5fc;
 
-  --color-focus-ring: #567a5f;
+  --color-focus-ring: #43617f;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  /* Raios — escala do design system */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
 
-  --shadow-elevated: 0 8px 24px -8px rgba(33, 36, 31, 0.22), 0 2px 6px -2px rgba(33, 36, 31, 0.12);
-  --shadow-soft: 0 1px 2px rgba(33, 36, 31, 0.06);
+  --shadow-elevated: 0 12px 32px -12px rgba(1, 39, 66, 0.28), 0 2px 8px -2px rgba(1, 39, 66, 0.1);
+  --shadow-soft: 0 1px 2px rgba(1, 39, 66, 0.06);
+}
+
+/*
+  Tema escuro — a mesma hierarquia institucional transposta para o grafite
+  geológico/abissal, que no design system já é a cor de sidebars escuros e
+  headers de alto contraste. Não é uma inversão: as superfícies sobem em
+  luminância conforme a elevação, como no tema claro.
+*/
+.dark {
+  --color-bg: #10191f;
+  --color-surface: #16222b;
+  --color-surface-sunken: #1c2a34;
+  --color-surface-raised: #22323d;
+  --color-border: #2a3a46;
+  --color-border-strong: #3b4d5b;
+
+  --color-text: #eef2f5;
+  --color-text-secondary: #a9b7c2;
+  --color-text-muted: #7c8b97;
+
+  --color-primary: #89a8c9;
+  --color-primary-hover: #abcaec;
+  --color-primary-deep: #cfe5ff;
+  --color-primary-soft: #1d3d59;
+  --color-primary-soft-border: #2a4966;
+  --color-on-primary: #001d33;
+
+  --color-accent: #d9ab77;
+  --color-accent-soft: #33261a;
+  --color-accent-border: #4a3722;
+
+  --color-success: #6cc196;
+  --color-success-soft: #16301f;
+  --color-warning: #e0aa5b;
+  --color-warning-soft: #33280f;
+  --color-error: #e08a84;
+  --color-error-soft: #361d1c;
+  --color-info: #8fbde3;
+  --color-info-soft: #16293a;
+
+  --color-focus-ring: #abcaec;
+
+  --shadow-elevated: 0 12px 32px -12px rgba(0, 0, 0, 0.6), 0 2px 8px -2px rgba(0, 0, 0, 0.4);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -77,7 +136,11 @@ h3,
 h4 {
   font-family: var(--font-display);
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+}
+
+h1 {
+  letter-spacing: -0.02em;
 }
 
 button,
@@ -85,6 +148,13 @@ input,
 select,
 textarea {
   font-family: inherit;
+}
+
+/* Métricas e qualquer número que se atualiza dinamicamente usam figuras
+   tabulares para não deslocar o layout a cada mudança. */
+.tabular,
+.font-display {
+  font-variant-numeric: tabular-nums;
 }
 
 :focus-visible {
@@ -97,9 +167,8 @@ textarea {
   color: var(--color-primary);
 }
 
-/* Faixa "estratificada" sutil, usada apenas em telas de autenticação e
-   estados vazios — uma referência discreta às camadas de rocha, sem
-   recorrer a fotografia ou textura pesada. */
+/* Faixa "estratificada" sutil, usada apenas em telas de autenticação —
+   referência discreta às camadas de rocha, sem textura pesada. */
 .strata-band {
   background: repeating-linear-gradient(
     180deg,
@@ -109,51 +178,6 @@ textarea {
     transparent 14px
   );
   opacity: 0.16;
-}
-
-/*
-  Tema escuro — mesma paleta mineral, redesenhada para fundo escuro (não é
-  uma simples inversão). Aplicado via a classe `.dark` no elemento <html>
-  (ver `hooks/useTheme.tsx`). Como todo o design system consome as cores
-  através de `var(--color-*)`, a troca de tema não exige alterar nenhum
-  componente — só estas variáveis.
-*/
-.dark {
-  --color-bg: #1b1d18;
-  --color-surface: #23261f;
-  --color-surface-sunken: #2b2e25;
-  --color-border: #383b30;
-  --color-border-strong: #4a4d3f;
-
-  --color-text: #eeece3;
-  --color-text-secondary: #aba895;
-  --color-text-muted: #7c7a68;
-
-  --color-primary: #86b590;
-  --color-primary-hover: #9bc4a4;
-  --color-primary-soft: #2a3a2c;
-  --color-primary-soft-border: #3d523f;
-
-  --color-accent: #d3a06e;
-  --color-accent-soft: #3a2d1f;
-
-  --color-success: #6fbf85;
-  --color-success-soft: #21331f;
-  --color-warning: #e3ab54;
-  --color-warning-soft: #3a2d16;
-  --color-error: #e37a70;
-  --color-error-soft: #3a221e;
-
-  --color-focus-ring: #9bc4a4;
-
-  --shadow-elevated: 0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 6px -2px rgba(0, 0, 0, 0.35);
-  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-/* Botões primários usam texto escuro no tema escuro pois a cor primária
-   passa a ser um verde claro (senão o contraste do texto branco cairia). */
-.dark .theme-on-primary {
-  color: #17231a;
 }
 
 .custom-scroll::-webkit-scrollbar {

@@ -46,6 +46,10 @@ Terminologia padronizada: a entidade é sempre **"Currículo"** (não
 - Vite
 - React Router
 - Tailwind CSS v4 (tokens de design via `@theme`, ver `src/styles/tokens.css`)
+- Design system "Modern Corporate Technical": petróleo/marinho profundo (`#1D3D59`)
+  como cor institucional, bronze mineral (`#8A5B29`) reservado a créditos e
+  elementos transacionais, canvas neutro sem brilho (`#F2F2F2`) e tipografia
+  Plus Jakarta Sans com figuras tabulares em todas as métricas.
 - Persistência local via `localStorage` (simula um backend enquanto ele não existe)
 
 ## Como instalar e executar
